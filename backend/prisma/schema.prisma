@@ -1,0 +1,177 @@
+// Prisma Schema for SkillBarter
+// LOCAL DEV  → SQLite  (file-based, no network needed)
+// PRODUCTION → PostgreSQL on Neon (change provider + DATABASE_URL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// USERS
+// ─────────────────────────────────────────────────────────────
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("Learner")  // Mentor | Learner | PeerSwapper
+  bio       String?
+  linkedin  String?
+  portfolio String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  wallet            Wallet?
+  skillsOffered     SkillOffered[]
+  skillsWanted      SkillWanted[]
+  availability      Availability[]
+  sessionsAsMentor  Session[]      @relation("MentorSessions")
+  sessionsAsLearner Session[]      @relation("LearnerSessions")
+  sentProposals     Proposal[]     @relation("SentProposals")
+  receivedProposals Proposal[]     @relation("ReceivedProposals")
+  notifications     Notification[]
+  transactions      Transaction[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// SKILLS OFFERED
+// ─────────────────────────────────────────────────────────────
+model SkillOffered {
+  id          Int    @id @default(autoincrement())
+  userId      Int
+  skillName   String
+  proficiency String @default("Beginner")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillName])
+}
+
+// ─────────────────────────────────────────────────────────────
+// SKILLS WANTED
+// ─────────────────────────────────────────────────────────────
+model SkillWanted {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  skillName String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillName])
+}
+
+// ─────────────────────────────────────────────────────────────
+// AVAILABILITY
+// ─────────────────────────────────────────────────────────────
+model Availability {
+  id            Int    @id @default(autoincrement())
+  userId        Int
+  dayOfWeek     String
+  preferredTime String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dayOfWeek])
+}
+
+// ─────────────────────────────────────────────────────────────
+// WALLET
+// ─────────────────────────────────────────────────────────────
+model Wallet {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  balance   Int      @default(50)
+  updatedAt DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// TRANSACTIONS
+// ─────────────────────────────────────────────────────────────
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  walletId    Int
+  userId      Int
+  amount      Int
+  type        String   // "credit" | "debit"
+  description String
+  createdAt   DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+// ─────────────────────────────────────────────────────────────
+// SESSIONS
+// ─────────────────────────────────────────────────────────────
+model Session {
+  id          Int      @id @default(autoincrement())
+  mentorId    Int
+  learnerId   Int
+  skillTopic  String
+  scheduledAt DateTime
+  durationMin Int      @default(60)
+  status      String   @default("pending")  // pending|confirmed|active|completed|cancelled
+  meetingLink String?
+  credits     Int      @default(10)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  mentor  User    @relation(fields: [mentorId], references: [id], name: "MentorSessions")
+  learner User    @relation(fields: [learnerId], references: [id], name: "LearnerSessions")
+  escrow  Escrow?
+}
+
+// ─────────────────────────────────────────────────────────────
+// ESCROW
+// ─────────────────────────────────────────────────────────────
+model Escrow {
+  id         Int       @id @default(autoincrement())
+  sessionId  Int       @unique
+  amount     Int
+  status     String    @default("held")  // held|released|refunded
+  createdAt  DateTime  @default(now())
+  releasedAt DateTime?
+
+  session Session @relation(fields: [sessionId], references: [id])
+}
+
+// ─────────────────────────────────────────────────────────────
+// PROPOSALS
+// ─────────────────────────────────────────────────────────────
+model Proposal {
+  id           Int      @id @default(autoincrement())
+  fromUserId   Int
+  toUserId     Int
+  offeredSkill String
+  wantedSkill  String
+  message      String?
+  status       String   @default("pending")  // pending|accepted|rejected|cancelled
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  fromUser User @relation(fields: [fromUserId], references: [id], name: "SentProposals")
+  toUser   User @relation(fields: [toUserId], references: [id], name: "ReceivedProposals")
+}
+
+// ─────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

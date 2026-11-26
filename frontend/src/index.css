@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .input-field {
+    @apply w-full h-12 px-4 border border-gray-300 rounded-lg text-sm outline-none focus:border-navy transition-colors;
+  }
+  .input-error {
+    @apply border-red-500 focus:border-red-500;
+  }
+  .error-msg {
+    @apply text-red-500 text-xs mt-1;
+  }
+  .btn-primary {
+    @apply w-full h-12 bg-navy text-white font-bold rounded-lg hover:bg-navy-dark transition-colors;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-xl p-10;
+  }
+  .logo-text .skill { @apply text-navy font-extrabold; }
+  .logo-text .barter { @apply text-orange font-extrabold; }
+}
