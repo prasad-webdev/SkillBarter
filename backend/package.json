@@ -13,13 +13,16 @@
     "db:generate": "prisma generate"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.2.1",
+    "@prisma/adapter-neon": "^7.10.1",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^4.22.3",
     "express-validator": "^7.3.2",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "ws": "^8.23.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

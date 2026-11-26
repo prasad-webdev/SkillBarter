@@ -6,7 +6,3 @@ dist/
 *.log
 .DS_Store
 .vscode/
-
-# SQLite local database (auto-created by prisma migrate)
-backend/prisma/dev.db
-backend/prisma/dev.db-journal

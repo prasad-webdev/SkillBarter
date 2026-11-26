@@ -1,110 +1,144 @@
-# SkillBarter 🔄
-### Peer-to-Peer Collaborative Knowledge Exchange Platform
-**MES Institute of Management and Career Courses, Pune**
-FY MCA 2026–28 | Division A
+# SkillBarter
 
-| Team Member | Roll No |
-|---|---|
-| Prasad Devidas Bairagi | 2601008 |
-| Pranav Shivdas Hasnale | 2601074 |
+Peer-to-peer collaborative knowledge exchange platform. Users teach what they know, learn what they want, and pay with skill credits instead of money.
 
----
+## Features
+
+**Working now**
+- Register and login with JWT authentication and password hashing
+- Role selection: Mentor, Learner or PeerSwapper
+- Skill profile: skills offered, skills wanted, proficiency, availability, bio and links
+- User directory with search and role filter
+- Session booking with credits held in escrow
+- Wallet with transaction history (new users start with 50 credits)
+- In-app notifications (list, mark one or all as read)
+
+**Planned**
+- User directory, swap proposal, booking, wallet and dashboard screens
+- Proposal (skill swap request) API
+- Session completion and escrow release
 
 ## Tech Stack
-| Layer | Technology |
+
+| Layer | Tech |
 |---|---|
-| Frontend | React 18 + TypeScript + Tailwind CSS |
-| Backend | Node.js + Express + TypeScript |
-| ORM | Prisma |
-| Local DB | SQLite (dev) |
-| Cloud DB | PostgreSQL — Neon (production) |
-| Auth | JWT (JSON Web Tokens) |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, React Router, Axios |
+| Backend | Node.js, Express, TypeScript, express-validator |
+| Database | PostgreSQL (Neon) with Prisma ORM |
+| Auth | JWT + bcryptjs |
 
----
+## Project Structure
 
-## Modules
-1. User Authentication & Role Management
-2. Skill Profiling & Onboarding
-3. User Directory & Skill Listings
-4. Dual Transaction Engine (Skill Swap + Credits)
-5. Automated Escrow System
-6. Session Scheduling & Meeting Link Management
-7. Wallet, Notifications & Dashboard
+```
+SkillBarter/
+├── backend/
+│   ├── prisma/schema.prisma      # database models
+│   └── src/
+│       ├── config/db.ts          # Prisma + Neon connection
+│       ├── middleware/auth.ts    # JWT middleware
+│       ├── routes/               # auth, skills, users, sessions, wallet, notifications
+│       └── index.ts              # server entry
+├── frontend/
+│   └── src/
+│       ├── api/axios.ts          # Axios instance with token
+│       ├── pages/                # Register, Login, SkillProfile
+│       ├── App.tsx               # routes + protected routes
+│       └── main.tsx
+└── docs/                         # structure notes and UI mockups
+```
 
----
-
-## How to Run
+## Getting Started
 
 ### Prerequisites
-- Node.js v18+
-- npm
+- Node.js 18+
+- A free PostgreSQL database (Neon, Supabase or local)
 
-### Backend
+### 1. Clone
+
+```bash
+git clone https://github.com/prasad-webdev/SkillBarter.git
+cd SkillBarter
+```
+
+### 2. Backend
+
 ```bash
 cd backend
 npm install
-npx prisma migrate dev --name init
-npm run dev
-# → http://localhost:5000
 ```
 
-### Frontend
+Create the env file from the template:
+
 ```bash
-cd frontend
-npm install
-npm run dev
-# → http://localhost:3000
+# PowerShell
+Copy-Item .env.example .env
 ```
 
-### View Database (GUI)
-```bash
-cd backend
-npx prisma studio
-# → http://localhost:5555
+Fill in `.env`:
+
 ```
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /api/auth/register | Register new user |
-| POST | /api/auth/login | Login user |
-| GET | /api/users | User directory (search/filter) |
-| GET | /api/users/:id | Single user profile |
-| POST | /api/skills/profile | Save skill profile |
-| GET/POST | /api/sessions | List / Book session |
-| PATCH | /api/sessions/:id/meeting-link | Add meeting link |
-| PATCH | /api/sessions/:id/complete | Complete session + release escrow |
-| GET | /api/wallet | Wallet balance + transactions |
-| GET/POST | /api/proposals | List / Send swap proposal |
-| PATCH | /api/proposals/:id | Accept / Reject proposal |
-| GET | /api/notifications | User notifications |
-
----
-
-## Environment Setup
-
-Copy `.env.example` to `.env` in the backend folder:
-```
-DATABASE_URL="file:./dev.db"
-JWT_SECRET=skillbarter_secret_2026
+DATABASE_URL="your pooled connection string"
+DIRECT_URL="your direct connection string"
+JWT_SECRET="a long random secret"
 PORT=5000
 NODE_ENV=development
 ```
 
----
+Set up the database and start the server:
 
-## Activity 4 — GUI Screens with Validation
+```bash
+npm run db:generate
+npm run db:push
+npm run dev
+```
 
-| Screen | URL | Validation |
-|---|---|---|
-| Register | /register | Name, email, password, role |
-| Login | /login | Email, password |
-| Skill Profile | /profile | Bio, skills, availability |
-| Dashboard | /dashboard | Protected route |
-| User Directory | /directory | Search + filter |
-| Book Session | /book/:mentorId | Date, time, credits |
-| Swap Proposal | /proposals/:userId | Skill offer/want |
-| Wallet | /wallet | Credit history |
+Check that it works: http://localhost:5000/api/health
+
+### 3. Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:3000. Requests to `/api` are proxied to the backend on port 5000.
+
+## API Overview
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| POST | `/api/auth/register` | Create account | No |
+| POST | `/api/auth/login` | Login, returns JWT | No |
+| POST | `/api/skills/profile` | Save skill profile | Yes |
+| GET | `/api/users` | Directory (`?search=` and `?role=`) | Yes |
+| POST | `/api/sessions` | Book a session (credits held in escrow) | Yes |
+| GET | `/api/wallet` | Balance and recent transactions | Yes |
+| GET | `/api/notifications` | List notifications | Yes |
+| PATCH | `/api/notifications/:id/read` | Mark one as read | Yes |
+| PATCH | `/api/notifications/read-all` | Mark all as read | Yes |
+| GET | `/api/health` | Health check | No |
+
+Protected routes need the header `Authorization: Bearer <token>`.
+
+## Database Models
+
+User, SkillOffered, SkillWanted, Availability, Wallet, Transaction, Session, Escrow, Proposal, Notification.
+
+## Scripts
+
+**Backend:** `npm run dev`, `npm run build`, `npm start`, `npm run db:push`, `npm run db:migrate`, `npm run db:studio`
+
+**Frontend:** `npm run dev`, `npm run build`, `npm run preview`
+
+## Git Workflow
+
+- `main` is always stable
+- Each feature gets its own branch: `feature/<name>`, fixes use `fix/<name>`
+- Merge through Pull Requests
+- Never commit `.env`
+
+## Author
+
+
+Prasad Bairagi, [GitHub](https://github.com/prasad-webdev)
